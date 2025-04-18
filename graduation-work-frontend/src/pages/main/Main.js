@@ -201,6 +201,7 @@ export function Main() {
 
   async function generateQuizFromText(text) {
     const prompt = `[${text}] [] 안에 있는 텍스트를 기반으로 4개의 문제를 만들어주세요. 
+    문제는 반드시 텍스트 내용 안에서 답을 그대로 찾을 수 있는 물음형 문제여야 합니다. 
   답변은 반드시 JSON.stringify()를 적용한 JSON 배열만 출력하세요. 
   형식은 다음과 같아야 합니다: 
   [
