@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Route, Switch, BrowserRouter, Redirect } from "react-router-dom";
 
 const Main = lazy(() => import('../pages/main'));
+const Login = lazy(() => import('../pages/login'));
 
 class RouteItem {
     constructor(path, key, exact, component, routes) {
@@ -17,6 +18,7 @@ class Routes {
     constructor() {
         this.routes = [
             new RouteItem("/main", "MAIN", true, Main, []),
+            new RouteItem("/login", "LOGIN", true, Login, []),
             // Add more routes here as needed.
         ];
     }
@@ -46,7 +48,7 @@ export function RenderRoutes({ routes }) {
                         />
                     );
                 })}
-                <Route exact path="/" render={() => (<Redirect to="/main" />)} />
+                <Route exact path="/" render={() => (<Redirect to="/login" />)} />
                 <Route component={() => <h1>Not Found!</h1>} />
             </Switch>
         </BrowserRouter>

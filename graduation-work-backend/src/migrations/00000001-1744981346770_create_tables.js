@@ -8,13 +8,14 @@ var Sequelize = require('sequelize');
  * createTable "User", deps: []
  * createTable "Subject", deps: [User]
  * createTable "Pdf", deps: [Subject]
+ * createTable "QuizHistory", deps: [Subject]
  *
  **/
 
 var info = {
     "revision": 1,
-    "name": "1742971952425-create-tables",
-    "created": "2025-03-26T06:52:32.465Z",
+    "name": "1744981346770-create-tables",
+    "created": "2025-04-18T13:02:26.812Z",
     "comment": ""
 };
 
@@ -128,6 +129,59 @@ var migrationCommands = [
             },
             {}
         ]
+    },
+
+    {
+        fn: "createTable",
+        params: [
+            "QuizHistory",
+            {
+                "id": {
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "type": Sequelize.INTEGER
+                },
+                "question": {
+                    "allowNull": false,
+                    "type": Sequelize.TEXT
+                },
+                "hint": {
+                    "allowNull": false,
+                    "type": Sequelize.TEXT
+                },
+                "options": {
+                    "allowNull": false,
+                    "type": Sequelize.TEXT
+                },
+                "answer_number": {
+                    "allowNull": false,
+                    "type": Sequelize.STRING
+                },
+                "selected_number": {
+                    "allowNull": false,
+                    "type": Sequelize.INTEGER
+                },
+                "subject_id": {
+                    "onDelete": "NO ACTION",
+                    "onUpdate": "CASCADE",
+                    "references": {
+                        "model": "Subject",
+                        "key": "id"
+                    },
+                    "allowNull": false,
+                    "type": Sequelize.INTEGER
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "type": Sequelize.DATE
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "type": Sequelize.DATE
+                }
+            },
+            {}
+        ]
     }
 ];
 
@@ -138,6 +192,10 @@ var rollbackCommands = [{
     {
         fn: "dropTable",
         params: ["Pdf"]
+    },
+    {
+        fn: "dropTable",
+        params: ["QuizHistory"]
     },
     {
         fn: "dropTable",

@@ -9,8 +9,7 @@ import { tokenizeAfterComparing } from '@utils/tokenizer';
 import { AccountType } from '@config/passport';
 import models from '@models/index';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { Op, col } from 'sequelize';
 
 const usersController = Router();
 
@@ -59,7 +58,6 @@ usersController.post(
         throw new ResponseError.BadRequest('과목 ID가 누락되었습니다.');
       }
   
-      // 여기서 subjectId를 이용해 DB에 저장
       await models.Pdf.create({
           original_name: req.file.originalname, 
           filename: req.file.filename,
@@ -110,5 +108,77 @@ usersController.get(
       res.json(BuildResponse.get({ subjects }));
     })
   );
+
+// 푼 문제 저장
+usersController.post(
+  '/saveQuizResult',
+  passport.authenticate('jwt', { session: false }),
+  expressAsyncHandler(async (req: Request, res: Response) => {
+    const account = checkAccountNormal(req.user);
+
+    const quizResults = req.body;
+
+    if (!Array.isArray(quizResults) || quizResults.length === 0) {
+      throw new ResponseError.BadRequest('저장할 퀴즈 데이터가 없습니다.');
+    }
+
+    for (const quiz of quizResults) {
+      if (!quiz.question || !quiz.hint || !quiz.options || !quiz.answer_number || typeof quiz.selected_number !== 'number' || !quiz.subject_id) {
+        throw new ResponseError.BadRequest('퀴즈 데이터 형식이 올바르지 않습니다.');
+      }
+
+      const subject = await models.Subject.findOne({
+        where: { id: quiz.subject_id, user_id: account.id }
+      });
+      if (!subject) {
+        throw new ResponseError.BadRequest('유효하지 않은 과목 ID입니다.');
+      }
+
+      await models.QuizHistory.create({
+        question: quiz.question,
+        hint: quiz.hint,
+        options: quiz.options,
+        answer_number: quiz.answer_number,
+        selected_number: quiz.selected_number,
+        subject_id: quiz.subject_id,
+      });      
+    }
+
+    res.json(BuildResponse.get({ message: '퀴즈 결과 저장 완료' }));
+  })
+);
+
+
+// 오답노트 조회
+usersController.get(
+  '/wrongNote/:subjectId',
+  passport.authenticate('jwt', { session: false }),
+  expressAsyncHandler(async (req: Request, res: Response) => {
+    const account = checkAccountNormal(req.user);
+    const subjectId = parseInt(req.params.subjectId, 10);
+
+    const subject = await models.Subject.findOne({
+      where: { id: subjectId, user_id: account.id }
+    });
+    if (!subject) {
+      throw new ResponseError.NotFound('해당 과목을 찾을 수 없습니다.');
+    }
+
+    const wrongNotes = await models.QuizHistory.findAll({
+      where: {
+        subject_id: subjectId,
+        [Op.and]: [
+          { selected_number: { [Op.ne]: null } },
+          { selected_number: { [Op.ne]: col('answer_number') } }
+        ]
+      },
+      attributes: ['question', 'hint', 'options', 'answer_number', 'selected_number'],
+      order: [['createdAt', 'ASC']],
+    });
+
+    res.json(wrongNotes);
+  })
+);
+
 
 export default usersController;
